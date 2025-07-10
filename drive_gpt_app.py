@@ -24,7 +24,7 @@ st.write("Select one or more files from Google Drive for analysis.")
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 # NOTE: The redirect URI for deployment will be your app's URL.
 # For local testing, it's localhost. We will use the deployed URL later.
-REDIRECT_URI = "http://localhost:8501" 
+REDIRECT_URI = "https://zw2bm6uwryon2f5pnfsauk.streamlit.app/" 
 
 # --- Helper Functions (No changes here) ---
 def get_file_content(drive_service, file_info):
