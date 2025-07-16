@@ -4,7 +4,6 @@ import google.generativeai as genai
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import io
-import base64
 import fitz  # PyMuPDF
 import docx
 import pptx
@@ -93,7 +92,7 @@ if "credentials" not in st.session_state:
 if not st.session_state.credentials:
     try:
         flow = Flow.from_client_config(
-            client_config=json.loads(st.secrets["google_credentials"]),
+            client_config=st.secrets["google_credentials"],
             scopes=SCOPES,
             redirect_uri=REDIRECT_URI
         )
@@ -114,7 +113,9 @@ if not st.session_state.credentials:
         st.error("Could not load Google credentials from secrets. Ensure they are correctly configured.")
         st.error(f"Specific error: {e}")
 else:
-    creds = Credentials.from_authorized_user_info(json.loads(st.session_state.credentials))
+    creds = Credentials.from_authorized_user_info(
+        json.loads(st.session_state.credentials)
+    )
     drive_service = build('drive', 'v3', credentials=creds)
 
     # --- FETCH FILES ---
