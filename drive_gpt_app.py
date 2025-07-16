@@ -99,9 +99,9 @@ if not st.session_state.credentials:
         auth_url, _ = flow.authorization_url(prompt='consent')
         st.markdown(f"[Authorize Google Drive]({auth_url})")
 
-        query_params = st.experimental_get_query_params()
+        query_params = st.query_params
         if "code" in query_params:
-            code = query_params["code"][0]
+            code = query_params["code"]
             flow.fetch_token(code=code)
             creds = flow.credentials
             st.session_state.credentials = creds.to_json()
