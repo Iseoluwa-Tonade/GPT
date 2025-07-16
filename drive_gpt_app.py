@@ -1,15 +1,14 @@
 import os
 import streamlit as st
 import json
-import google.generativeai as genai # New import
+import google.generativeai as genai
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import io
-import base64
 import fitz  # PyMuPDF
 import docx
 import pptx
-from PIL import Image # Needed for Gemini
+from PIL import Image
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.errors import HttpError
@@ -25,7 +24,6 @@ SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 REDIRECT_URI = "https://zw2bm6uwryon2f5pnfsauk.streamlit.app"
 
 # --- Helper Functions ---
-# This function remains unchanged
 def get_file_content(drive_service, file_info):
     """Downloads and extracts content from a Google Drive file."""
     file_id = file_info['id']
@@ -87,12 +85,10 @@ def get_file_content(drive_service, file_info):
             else: return "unsupported", f"Google Workspace type ({mime_type})"
         else: return "unsupported", "Google Drive API Error"
 
-# ## MODIFIED ## - Replaced OpenAI function with Gemini function
 def get_gemini_response(api_key, prompt_parts):
     """Sends a multimodal prompt to the Gemini API."""
     try:
         genai.configure(api_key=api_key)
-        # Using Gemini 1.5 Pro for its large context window
         model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
         response = model.generate_content(prompt_parts)
         return response.text
@@ -100,7 +96,6 @@ def get_gemini_response(api_key, prompt_parts):
         return f"ERROR: Could not generate response from Gemini. Details: {str(e)}"
 
 # --- Main App Logic ---
-# This section up to the analysis button is unchanged
 if "credentials" not in st.session_state:
     st.session_state.credentials = None
 
@@ -119,8 +114,11 @@ if st.session_state.credentials is None:
             creds = flow.credentials
             st.session_state.credentials = creds.to_json()
             st.rerun()
+            
+    except KeyError:
+        st.error('The "google_credentials" secret is missing. Please add it to your Streamlit secrets.')
     except Exception as e:
-        st.error("Could not load Google credentials from secrets. Ensure they are correctly configured.")
+        st.error("An unexpected error occurred during authentication.")
         st.error(f"Specific error: {e}")
 else:
     creds = Credentials.from_authorized_user_info(json.loads(st.session_state.credentials))
@@ -147,28 +145,26 @@ else:
             selected_files_display = st.multiselect("Choose files to analyze:", options=list(file_options.keys()))
             user_prompt = st.text_area("What would you like to know about these files?", height=100)
 
-            # ## MODIFIED ## - This entire block is now simpler
             if st.button("✨ Analyze Files with Gemini", disabled=(not selected_files_display or not user_prompt)):
                 prompt_parts = []
-                with st.spinner("Processing files..."):
+                with st.status("Processing files...", expanded=True) as status:
                     for file_display in selected_files_display:
+                        status.update(label=f"Processing: {file_display}...")
                         file_info = file_options[file_display]
                         content_type, content = get_file_content(drive_service, file_info)
 
                         if content_type == 'text':
-                            # Add the full text of the document to the prompt
                             prompt_parts.append(f"\n--- DOCUMENT: {file_info['name']} ---\n{content}")
                         elif content_type == 'image':
-                            # Gemini's Python SDK can take PIL images directly
                             img = Image.open(io.BytesIO(content))
                             prompt_parts.append(img)
                         else:
                             st.warning(f"Skipping unsupported file: {file_info['name']} ({content})")
-                
-                if prompt_parts:
-                    # Add the user's final question to the prompt
-                    prompt_parts.insert(0, user_prompt)
+                    
+                    status.update(label="All files processed!", state="complete")
 
+                if prompt_parts:
+                    prompt_parts.insert(0, user_prompt)
                     st.info(f"Sending {len(selected_files_display)} file(s) to Gemini for analysis...")
                     with st.spinner("🤖 Gemini is thinking..."):
                         api_key = st.secrets["GOOGLE_API_KEY"]
