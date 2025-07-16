@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import json
 import google.generativeai as genai
@@ -30,7 +31,7 @@ def get_file_content(drive_service, file_info):
 
         if mime_type.startswith("text/"):
             return 'text', file_bytes.decode("utf-8", errors="ignore")
-        
+
         elif mime_type == "application/pdf":
             pdf_doc = fitz.open(stream=file_bytes, filetype="pdf")
             text = ""
@@ -99,6 +100,7 @@ if not st.session_state.credentials:
         auth_url, _ = flow.authorization_url(prompt='consent')
         st.markdown(f"[Authorize Google Drive]({auth_url})")
 
+        # ✅ NEW QUERY PARAMS LOGIC
         query_params = st.query_params
         if "code" in query_params:
             code = query_params["code"]
