@@ -22,7 +22,7 @@ st.write("Select one or more files from Google Drive for analysis.")
 
 # --- Constants ---
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-REDIRECT_URI = "https://zw2bm6uwryon2f5pnfsauk.streamlit.app/"
+REDIRECT_URI = "https://zw2bm6uwryon2f5pnfsauk.streamlit.app"
 
 # --- Helper Functions ---
 # This function remains unchanged
